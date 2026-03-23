@@ -1,0 +1,15 @@
+FROM node:alpine
+
+WORKDIR /app
+
+COPY . ./
+
+# npm install
+RUN npm install
+
+RUN npm run build
+
+RUN npm install -g serve
+
+# npm start
+ENTRYPOINT ["serve", "-s", "build"]
