@@ -32,6 +32,17 @@
       notify: update cache
     - name: Flushing handler so to install next applications
       ansible.builtin.meta: flush_handlers
+    - name: Now need to install some more apps
+      ansible.builtin.apt:
+        name:
+          - mongodb-org
+          - nodejs
+        state: present
+        update_cache: true
+    - name: Start and enable the services
+      ansible.builtin.systemd_service:
+        name: mongo
+        enabled: true
   handlers:
     - name: update cache
       ansible.builtin.apt:
