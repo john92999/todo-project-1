@@ -46,10 +46,6 @@
     - name: add and update mongodb commands
       community.mongodb.mongodb_shell:
         db: admin
-- name: Configure MongoDB
-  hosts: all
-  become: yes
-  tasks:
     - name: Create MongoDB root user
       ansible.builtin.shell: |
         mongosh --eval '
