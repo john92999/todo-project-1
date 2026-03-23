@@ -113,7 +113,7 @@ nano .env
 
 REACT_APP_BACKEND_SERVER_URL=http://{ip of the machine}:8080
 
-npm install
+npm install --legacy-peer-deps
 
 npm start
 
