@@ -41,7 +41,7 @@
         update_cache: true
     - name: Start and enable the services
       ansible.builtin.systemd_service:
-        name: mongo
+        name: mongod
         enabled: true
   handlers:
     - name: update cache
