@@ -1,0 +1,16 @@
+- name: Install all the required files for the Application to run
+  become: yes
+  vars:
+    applications:
+      - curl
+      - git
+      - openjdk-11-jdk
+      - maven
+  hosts: all
+  tasks:
+    - name: Install the apps which can be installed through
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop: "{{ applications }}"
