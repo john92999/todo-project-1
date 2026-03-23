@@ -100,7 +100,7 @@ cd todo-api
 mvn clean package -DskipTests
 
 nohup java -jar target/todo-1.0.0.jar > ~/todo-api/api.log 2>&1 &
-echo $! > ~/todo-app/api.pid
+echo $! > ~/todo-api/api.pid
 
 ```
 
