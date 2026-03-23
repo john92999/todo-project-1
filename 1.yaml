@@ -43,6 +43,55 @@
       ansible.builtin.systemd_service:
         name: mongod
         enabled: true
+    - name: add and update mongodb commands
+      community.mongodb.mongodb_shell:
+        db: admin
+- name: Configure MongoDB
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create MongoDB root user
+      ansible.builtin.shell: |
+        mongosh --eval '
+          db = db.getSiblingDB("admin");
+          db.createUser({
+            user: "root",
+            pwd: "password",
+            roles: [{ role: "root", db: "admin" }]
+          });
+        '
+      args:
+        creates: /root/.mongo_user_created
+
+    - name: Mark mongo user as created
+      ansible.builtin.file:
+        path: /root/.mongo_user_created
+        state: touch
+
+    - name: Create todo database and collection
+      ansible.builtin.shell: |
+        mongosh --eval '
+          db = db.getSiblingDB("todo");
+          db.createCollection("todos");
+        '
+
+    - name: Enable MongoDB authentication in config
+      ansible.builtin.blockinfile:
+        path: /etc/mongod.conf
+        block: |
+          security:
+            authorization: enabled
+
+    - name: Restart MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted
+        enabled: yes
+
+    - name: Verify MongoDB is running
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
   handlers:
     - name: update cache
       ansible.builtin.apt:
