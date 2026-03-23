@@ -115,7 +115,9 @@ REACT_APP_BACKEND_SERVER_URL=http://{ip of the machine}:8080
 
 npm install --legacy-peer-deps
 
-npm start
+nohup npm start > ~/todo-ui.log 2>&1 &
+echo $! > ~/todo-ui.pid
+echo "UI started with PID $(cat ~/todo-ui.pid)"
 
 ```
 
