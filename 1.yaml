@@ -1,12 +1,12 @@
 - name: Install all the required files for the Application to run
   become: yes
+  hosts: all
   vars:
     applications:
       - curl
       - git
       - openjdk-11-jdk
       - maven
-  hosts: all
   tasks:
     - name: Install the apps which can be installed through
       ansible.builtin.apt:
@@ -14,3 +14,25 @@
         state: present
         update_cache: yes
       loop: "{{ applications }}"
+    - name: key repositories for Mongo and Node
+      ansible.builtin.shell: |
+        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+      args:
+        creates: /usr/share/keyrings/mongodb-server-7.0.gpg
+      notify: update cache
+    - name: Add MongoDB repository
+      ansible.builtin.shell: |
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+      args:
+        creates: /etc/apt/sources.list.d/mongodb-org-7.0.list
+      notify: update cache
+    - name: Add NodeJS 16 repository
+      ansible.builtin.shell: |
+        curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+      notify: update cache
+    - name: Flushing handler so to install next applications
+      ansible.builtin.meta: flush_handlers
+  handlers:
+    - name: update cache
+      ansible.builtin.apt:
+        update_cache: true
