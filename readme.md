@@ -118,3 +118,84 @@ npm install
 npm start
 
 ```
+
+uninstalling everything
+
+```
+
+# Stop the API (if running in background)
+kill $(cat ~/todo-app/api.pid) 2>/dev/null
+
+# Stop Node/React (if running in foreground, just Ctrl+C, or:)
+pkill -f "react-scripts"
+pkill -f "node"
+pkill -f "java"
+
+rm -rf ~/todo-app
+
+mongosh -u root -p password --authenticationDatabase admin
+
+use todo
+db.todos.drop()
+exit
+
+```
+
+Stop and remove MongoDB completely
+
+```
+
+sudo systemctl stop mongod
+sudo systemctl disable mongod
+sudo apt-get purge -y mongodb-org*
+sudo rm -rf /var/lib/mongodb
+sudo rm -rf /var/log/mongodb
+sudo rm -f /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo rm -f /usr/share/keyrings/mongodb-server-7.0.gpg
+sudo apt-get autoremove -y
+
+```
+
+Remove Java 11
+
+```
+sudo apt-get purge -y openjdk-11-jdk openjdk-11-jre
+sudo apt-get autoremove -y
+
+```
+
+Remove Maven
+
+```
+sudo apt-get purge -y maven
+sudo apt-get autoremove -y
+
+```
+
+Remove Node.js
+
+```
+sudo apt-get purge -y nodejs
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
+sudo apt-get autoremove -y
+
+```
+
+Clean apt cache
+
+```
+sudo apt-get clean
+sudo apt-get update
+
+```
+
+Verify everything is gone
+
+```
+java -version      # should say "not found"
+mvn -version       # should say "not found"
+node -v            # should say "not found"
+mongosh            # should say "not found"
+
+
+```
