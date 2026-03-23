@@ -43,9 +43,6 @@
       ansible.builtin.systemd_service:
         name: mongod
         enabled: true
-    - name: add and update mongodb commands
-      community.mongodb.mongodb_shell:
-        db: admin
     - name: Create MongoDB root user
       ansible.builtin.shell: |
         mongosh --eval '
