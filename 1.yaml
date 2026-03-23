@@ -43,6 +43,19 @@
       ansible.builtin.systemd_service:
         name: mongod
         enabled: true
+    - name: Start MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+
+    - name: Wait for MongoDB to be ready
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 27017
+        delay: 5
+        timeout: 30
+
     - name: Create MongoDB root user
       ansible.builtin.shell: |
         mongosh --eval '
