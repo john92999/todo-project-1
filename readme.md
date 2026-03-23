@@ -126,7 +126,7 @@ uninstalling everything
 ```
 
 # Stop the API (if running in background)
-kill $(cat ~/todo-app/api.pid) 2>/dev/null
+kill $(cat ~/todo-api/api.pid) 2>/dev/null
 
 # Stop Node/React (if running in foreground, just Ctrl+C, or:)
 pkill -f "react-scripts"
