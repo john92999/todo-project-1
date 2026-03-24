@@ -14,10 +14,10 @@ pipeline{
         stage('Download the git repositories'){
             steps{
                 dir('todo-api'){
-                    git url:"https://github.com/pelthepu/todo-api.git", branch: 'main'
+                    git url:"https://github.com/pelthepu/todo-api.git", branch: 'master'
                 }
                 dir('todo-ui'){
-                    git url:"https://github.com/pelthepu/todo-ui.git", branch: 'main'
+                    git url:"https://github.com/pelthepu/todo-ui.git", branch: 'master'
                 }
             }
         }
