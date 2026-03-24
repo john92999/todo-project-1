@@ -46,6 +46,17 @@
         use todo
         db.createCollection("todos")
         exit
+    - name: change mongo configuration
+      ansible.builtin.blockinfile:
+        path: /etc/mongod.conf
+        block: |
+          security:
+            authorization: enabled
+    - name: Restart mongo
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted
+        enabled: yes
   handlers:
     - name: update cache
       ansible.builtin.apt:
