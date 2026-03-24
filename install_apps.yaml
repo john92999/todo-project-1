@@ -1,10 +1,6 @@
-- name: Install prerequisites
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install the application which are present
-      ansible.builtin.apt:
-        name: "{{ packages }}"
-        update_cache: yes
-        state: present
-      loop: "{{ packages }}"
+- name: Install the application which are present
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    update_cache: yes
+    state: present
+  loop: "{{ packages }}"
