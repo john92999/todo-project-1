@@ -31,14 +31,19 @@ pipeline{
         stage('Sonar Qube Analysis'){
             steps{
                 dir('todo-api'){
-                    withSonarQubeEnv ('SonarQube'){
-                    sh '''
-                        mvn sonar:sonar\
-                        -Dsonar.projectKey=todo-project\
-                        -Dsonar.projectName='todo project'\
-                        -Dsonar.java.binaries=target/classes\
-                        --batch-mode
-                    '''
+                    withEnv([
+                    "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64",
+                    "PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:${env.PATH}"
+                    ]){
+                        withSonarQubeEnv ('SonarQube'){
+                        sh '''
+                            mvn sonar:sonar\
+                            -Dsonar.projectKey=todo-project\
+                            -Dsonar.projectName='todo project'\
+                            -Dsonar.java.binaries=target/classes\
+                            --batch-mode
+                        '''
+                        }
                     }
                 }
             }
