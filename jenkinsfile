@@ -52,6 +52,8 @@ pipeline{
             steps{
                 dir('todo-api'){
                     script {
+
+                        // Get version
                         def version = sh(
                             script: """
                                 mvn help:evaluate \
@@ -61,24 +63,48 @@ pipeline{
                             """,
                             returnStdout: true
                         ).trim()
-                        def appName = 'todo-app'
-                        def jarFile = "target/${appName}-${version}.jar"
+
+                        // Get artifactId (better than hardcoding appName)
+                        def appName = sh(
+                            script: """
+                                mvn help:evaluate \
+                                -Dexpression=project.artifactId \
+                                -q \
+                                -DforceStdout
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        // Get actual jar file
+                        def jarFile = sh(
+                            script: "ls target/*.jar | head -n 1",
+                            returnStdout: true
+                        ).trim()
+
                         sh "ls -lh ${jarFile}"
+
                         withCredentials([usernamePassword(
                             credentialsId: 'jfrog-credentials',
                             usernameVariable: 'JFROG_USER',
                             passwordVariable: 'JFROG_PASS'
                         )]){
+
                             def jfrogUrl  = "http://${SERVER_IP}:30082/artifactory"
                             def repo      = "libs-release-local"
-                            def destPath  = "${repo}/${appName}/${version}/${appName}-${version}.jar"
+
+                            // Use actual jar filename
+                            def fileName = jarFile.tokenize('/').last()
+
+                            def destPath  = "${repo}/${appName}/${version}/${fileName}"
+
                             sh """
                                 curl \
                                     -u ${JFROG_USER}:${JFROG_PASS} \
                                     -T ${jarFile} \
                                     -X PUT \
                                     "${jfrogUrl}/${destPath}"
-                                """
+                            """
+
                             echo "✅ Successfully uploaded to: ${jfrogUrl}/${destPath}"
                         }
                     }
@@ -87,16 +113,25 @@ pipeline{
         }
         stage('Deploy todo-api'){
             steps {
-                sh '''
-                    if [ -f ~/todo-api/api.pid ]; then
-                        kill $(cat ~/todo-api/api.pid) 2>/dev/null || true
-                        rm -f ~/todo-api/api.pid
-                    fi
-                    cd ~/todo-api
-                    nohup java -jar target/todo-1.0.0.jar > ~/todo-api/api.log 2>&1 &
-                    echo $! > ~/todo-api/api.pid
-                    echo "✅ API started with PID $(cat ~/todo-api/api.pid)"
-                '''
+                dir('todo-api'){
+                    sh '''
+                        if [ -f ~/todo-api/api.pid ]; then
+                            kill $(cat ~/todo-api/api.pid) 2>/dev/null || true
+                            rm -f ~/todo-api/api.pid
+                        fi
+
+                        cd ~/todo-api
+
+                        JAR=$(ls target/*.jar | head -n 1)
+
+                        echo "Using JAR: $JAR"
+
+                        nohup java -jar $JAR > ~/todo-api/api.log 2>&1 &
+
+                        echo $! > ~/todo-api/api.pid
+                        echo "✅ API started with PID $(cat ~/todo-api/api.pid)"
+                    '''
+                }
             }
         }
         stage('Deploy todo-ui'){
