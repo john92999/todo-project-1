@@ -64,6 +64,11 @@
         path: /usr/lib/systemd/system/jenkins.service
         regexp: 'Environment="JENKINS_PORT=8080"'
         replace: 'Environment="JENKINS_PORT=9095"'
+    - name: change Jenkins port
+      ansible.built.lineinfile:
+        path: /etc/default/jenkins
+        regexp: "^HTTP_PORT="
+        line: "HTTP_PORT=9095"
     - name: Reload the system
       ansible.builtin.systemd:
         daemon_reload: yes
