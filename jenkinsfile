@@ -124,7 +124,7 @@ pipeline{
 
                         echo "Using JAR: $JAR"
 
-                        nohup java -jar $JAR > api.log 2>&1 &
+                        setsid nohup java -jar $JAR --server.address=0.0.0.0 > api.log 2>&1 &
 
                         echo $! > api.pid
                         echo "✅ API started with PID $(cat api.pid)"
@@ -145,7 +145,7 @@ pipeline{
 
                         npm install --legacy-peer-deps
 
-                        nohup npm start > ui.log 2>&1 &
+                        setsid nohup npm start -- --host 0.0.0.0 > ui.log 2>&1 &
 
                         echo \$! > ui.pid
                         echo "✅ UI started with PID \$(cat ui.pid)"
