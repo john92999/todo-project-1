@@ -2,15 +2,43 @@
   become: yes
   hosts: all
   vars:
-    applications:
+    applications1:
       - openjdk-11-jdk
       - curl
       - maven
+    applications2:
+      - mongodb-org
+      - nodejs
   tasks:
     - name: Install the application which are present
+      include_tasks: install_apps.yaml
+      vars:
+        packages: "{{ applications1 }}"
+    - name: install the gpg for mongo and nodejs
+      ansible.builtin.shell: |
+        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+      args:
+        creates: /usr/share/keyrings/mongodb-server-7.0.gpg
+    - name: Add MongoDB repository
+      ansible.builtin.shell: |
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+      args:
+        creates: /etc/apt/sources.list.d/mongodb-org-7.0.list
+    - name: Add NodeJS 16 repository
+      ansible.builtin.shell: curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+      notify: update cache
+    - name: update_cache immediatley
+      ansible.builtin.meta: flush_handlers
+    - name: Install the application which are present
+      include_tasks: install_apps.yaml
+      vars:
+        packages: "{{ applications2 }}"
+    - name: Start MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+  handlers:
+    - name: update cache
       ansible.builtin.apt:
-        name: "{{ item }}"
         update_cache: yes
-        state: present
-      loop:
-        - "{{ applications }}"
