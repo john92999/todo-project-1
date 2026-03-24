@@ -1,0 +1,21 @@
+docker run -d \
+  --name todo-mongo \
+  -e MONGO_INITDB_ROOT_USERNAME=root \
+  -e MONGO_INITDB_ROOT_PASSWORD=password \
+  -p 27017:27017 \
+  mongo:7.0
+
+docker build -t todo-api:v1 .
+
+docker run -d \
+  --name todo-api \
+  -p 8080:8080 \
+  todo-api:v1
+
+docker build -t todo-ui:v1 .
+
+docker run -d \
+  --name todo-ui \
+  -p 3000:3000 \
+  -e REACT_APP_BACKEND_SERVER_URL=http://localhost:8080 \
+  todo-ui:v1
