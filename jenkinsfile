@@ -115,39 +115,42 @@ pipeline{
             steps {
                 dir('todo-api'){
                     sh '''
-                        if [ -f ~/todo-api/api.pid ]; then
-                            kill $(cat ~/todo-api/api.pid) 2>/dev/null || true
-                            rm -f ~/todo-api/api.pid
+                        if [ -f api.pid ]; then
+                            kill $(cat api.pid) 2>/dev/null || true
+                            rm -f api.pid
                         fi
-
-                        cd ~/todo-api
 
                         JAR=$(ls target/*.jar | head -n 1)
 
                         echo "Using JAR: $JAR"
 
-                        nohup java -jar $JAR > ~/todo-api/api.log 2>&1 &
+                        nohup java -jar $JAR > api.log 2>&1 &
 
-                        echo $! > ~/todo-api/api.pid
-                        echo "✅ API started with PID $(cat ~/todo-api/api.pid)"
+                        echo $! > api.pid
+                        echo "✅ API started with PID $(cat api.pid)"
                     '''
                 }
             }
         }
         stage('Deploy todo-ui'){
             steps {
-                sh """
-                    if [ -f ~/todo-ui.pid ]; then
-                        kill \$(cat ~/todo-ui.pid) 2>/dev/null || true
-                        rm -f ~/todo-ui.pid
-                    fi
-                    cd ~/todo-ui
-                    echo "REACT_APP_BACKEND_SERVER_URL=http://${SERVER_IP}:8080" > .env
-                    npm install --legacy-peer-deps
-                    nohup npm start > ~/todo-ui.log 2>&1 &
-                    echo \$! > ~/todo-ui.pid
-                    echo "✅ UI started with PID \$(cat ~/todo-ui.pid)"
-                """
+                dir('todo-ui'){
+                    sh """
+                        if [ -f ui.pid ]; then
+                            kill \$(cat ui.pid) 2>/dev/null || true
+                            rm -f ui.pid
+                        fi
+
+                        echo "REACT_APP_BACKEND_SERVER_URL=http://${SERVER_IP}:8080" > .env
+
+                        npm install --legacy-peer-deps
+
+                        nohup npm start > ui.log 2>&1 &
+
+                        echo \$! > ui.pid
+                        echo "✅ UI started with PID \$(cat ui.pid)"
+                    """
+                }
             }
         }
     }
