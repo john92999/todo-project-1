@@ -30,7 +30,8 @@ pipeline{
         }
         stage('Sonar Qube Analysis'){
             steps{
-                withSonarQubeEnv ('SonarQube'){
+                dir('todo-api'){
+                    withSonarQubeEnv ('SonarQube'){
                     sh '''
                         mvn sonar:sonar\
                         -Dsonar.projectKey=todo-project\
@@ -38,6 +39,7 @@ pipeline{
                         -Dsonar.java.binaries=target/classes\
                         --batch-mode
                     '''
+                    }
                 }
             }
         }
