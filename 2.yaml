@@ -38,6 +38,14 @@
         name: mongod
         state: started
         enabled: yes
+    - name: run shell module to install mongod
+      ansible.builtin.shell: |
+        mongosh
+        use admin
+        db.createUser({ user: "root", pwd: "password", roles: [{ role: "root", db: "admin" }] })
+        use todo
+        db.createCollection("todos")
+        exit
   handlers:
     - name: update cache
       ansible.builtin.apt:
