@@ -1,0 +1,112 @@
+pipeline{
+    agent any
+    options {
+        retry(2)
+    }
+    tools{
+        jdk 'Java11'
+        maven 'Maven'
+    }
+    environment{
+        SERVER_IP = '10.48.17.165'
+    }
+    stages{
+        stage('Download the git repositories'){
+            steps{
+                dir('todo-api'){
+                    git url:"https://github.com/pelthepu/todo-api.git", branch: 'main'
+                }
+                dir('todo-ui'){
+                    git url:"https://github.com/pelthepu/todo-ui.git", branch: 'main'
+                }
+            }
+        }
+        stage('Build todo-api'){
+            steps{
+                dir('todo-api'){
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        stage('Sonar Qube Analysis'){
+            steps{
+                withSonarQubeEnv ('SonarQube'){
+                    sh '''
+                        mvn sonar:sonar\
+                        -Dsonar.projectKey=todo-project\
+                        -Dsonar.projectName='todo project'\
+                        -Dsonar.java.binaries=target/classes\
+                        --batch-mode
+                    '''
+                }
+            }
+        }
+        stage('upload to jfrog'){
+            steps{
+                dir('todo-api'){
+                    script {
+                        def version = sh(
+                            script: """
+                                mvn help:evaluate \
+                                -Dexpression=project.version \
+                                -q \
+                                -DforceStdout
+                            """,
+                            returnStdout: true
+                        ).trim()
+                        def appName = 'todo-app'
+                        def jarFile = "target/${appName}-${version}.jar"
+                        sh "ls -lh ${jarFile}"
+                        withCredentials([usernamePassword(
+                            credentialsId: 'jfrog-credentials',
+                            usernameVariable: 'JFROG_USER',
+                            passwordVariable: 'JFROG_PASS'
+                        )]){
+                            def jfrogUrl  = "http://${SERVER_IP}:30082/artifactory"
+                            def repo      = "libs-release-local"
+                            def destPath  = "${repo}/${appName}/${version}/${appName}-${version}.jar"
+                            sh """
+                                curl \
+                                    -u ${JFROG_USER}:${JFROG_PASS} \
+                                    -T ${jarFile} \
+                                    -X PUT \
+                                    "${jfrogUrl}/${destPath}"
+                                """
+                            echo "✅ Successfully uploaded to: ${jfrogUrl}/${destPath}"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Deploy todo-api'){
+            steps {
+                sh '''
+                    if [ -f ~/todo-api/api.pid ]; then
+                        kill $(cat ~/todo-api/api.pid) 2>/dev/null || true
+                        rm -f ~/todo-api/api.pid
+                    fi
+                    cd ~/todo-api
+                    nohup java -jar target/todo-1.0.0.jar > ~/todo-api/api.log 2>&1 &
+                    echo $! > ~/todo-api/api.pid
+                    echo "✅ API started with PID $(cat ~/todo-api/api.pid)"
+                '''
+            }
+        }
+        stage('Deploy todo-ui'){
+            steps {
+                sh """
+                    if [ -f ~/todo-ui.pid ]; then
+                        kill \$(cat ~/todo-ui.pid) 2>/dev/null || true
+                        rm -f ~/todo-ui.pid
+                    fi
+                    cd ~/todo-ui
+                    echo "REACT_APP_BACKEND_SERVER_URL=http://${SERVER_IP}:8080" > .env
+                    npm install --legacy-peer-deps
+                    nohup npm start > ~/todo-ui.log 2>&1 &
+                    echo \$! > ~/todo-ui.pid
+                    echo "✅ UI started with PID \$(cat ~/todo-ui.pid)"
+                """
+            }
+        }
+    }
+}
