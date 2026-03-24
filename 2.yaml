@@ -38,14 +38,14 @@
         name: mongod
         state: started
         enabled: yes
-    - name: run shell module to install mongod
+    - name: Create MongoDB user and collection
       ansible.builtin.shell: |
-        mongosh
-        use admin
-        db.createUser({ user: "root", pwd: "password", roles: [{ role: "root", db: "admin" }] })
-        use todo
-        db.createCollection("todos")
-        exit
+        mongosh --eval '
+          use admin;
+          db.createUser({ user: "root", pwd: "password", roles: [{ role: "root", db: "admin" }] });
+          use todo;
+          db.createCollection("todos");
+        '
     - name: change mongo configuration
       ansible.builtin.blockinfile:
         path: /etc/mongod.conf
