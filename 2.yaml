@@ -6,9 +6,12 @@
       - openjdk-11-jdk
       - curl
       - maven
+      - openjdk-21-jdk
+      - fontconfig
     applications2:
       - mongodb-org
       - nodejs
+      - jenkins
   tasks:
     - name: Install the application which are present
       include_tasks: install_apps.yaml
@@ -24,6 +27,10 @@
         echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
       args:
         creates: /etc/apt/sources.list.d/mongodb-org-7.0.list
+    - name: Install and start jenkins
+      ansible.builtin.shell: |
+        sudo gpg --export 7198F4B714ABFC68 | sudo tee /usr/share/keyrings/jenkins-keyring.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
     - name: Add NodeJS 16 repository
       ansible.builtin.shell: curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
       notify: update cache
@@ -52,9 +59,19 @@
         block: |
           security:
             authorization: enabled
-    - name: Restart mongo
+    - name: Change Jenkins port
+      ansible.builtin.replace:
+        path: /usr/lib/systemd/system/jenkins.service
+        regexp: 'Environment="JENKINS_PORT=8080"'
+        replace: 'Environment="JENKINS_PORT=9095"'
+    - name: Reload the system
       ansible.builtin.systemd:
-        name: mongod
+        daemon_reload: yes
+    - name: Restart applications
+      ansible.builtin.systemd:
+        name:
+          - mongod
+          - jenkins
         state: restarted
         enabled: yes
   handlers:
