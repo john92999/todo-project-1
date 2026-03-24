@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: todo-mongo
+  namespace: todo-app
+spec:
+  serviceName: todo-mongo-service
+  replicas: 1                         # MongoDB single node — scale with replica set for prod
+  selector:
+    matchLabels:
+      app: todo-mongo
+  template:
+    metadata:
+      labels:
+        app: todo-mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7.0
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_ROOT_PASSWORD
+            - name: MONGO_INITDB_DATABASE
+              value: todo
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db     # MongoDB stores all data here
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: mongo-data
+          persistentVolumeClaim:
+            claimName: mongo-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-mongo-service
+  namespace: todo-app
+spec:
+  selector:
+    app: todo-mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+  clusterIP: None                     # Headless service — required for StatefulSet DNS

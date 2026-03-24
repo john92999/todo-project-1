@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-ui-config
+  namespace: todo-app
+data:
+  # This is injected into the browser at runtime via env.js
+  # window._env_.REACT_APP_BACKEND_SERVER_URL is read by src/api/index.ts
+  REACT_APP_BACKEND_SERVER_URL: "http://todo.example.com"   # replace with your domain or ingress IP

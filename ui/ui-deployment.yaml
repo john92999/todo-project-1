@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-ui
+  namespace: todo-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-ui
+  template:
+    metadata:
+      labels:
+        app: todo-ui
+    spec:
+      initContainers:
+        - name: inject-env                        # writes window._env_ before nginx starts
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "window._env_ = {" > /usr/share/nginx/html/env.js
+              echo "  REACT_APP_BACKEND_SERVER_URL: '$(REACT_APP_BACKEND_SERVER_URL)'" >> /usr/share/nginx/html/env.js
+              echo "};" >> /usr/share/nginx/html/env.js
+          env:
+            - name: REACT_APP_BACKEND_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-ui-config
+                  key: REACT_APP_BACKEND_SERVER_URL
+          volumeMounts:
+            - name: html-volume
+              mountPath: /usr/share/nginx/html
+      containers:
+        - name: todo-ui
+          image: YOUR_DOCKERHUB_USERNAME/todo-ui:v1   # replace with your image
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: html-volume
+              mountPath: /usr/share/nginx/html
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: html-volume
+          emptyDir: {}                              # shared between initContainer and nginx
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-ui-service
+  namespace: todo-app
+spec:
+  selector:
+    app: todo-ui
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: todo-ui-hpa
+  namespace: todo-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: todo-ui
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
