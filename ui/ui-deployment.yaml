@@ -14,7 +14,7 @@ spec:
         app: todo-ui
     spec:
       initContainers:
-        - name: inject-env                        # writes window._env_ before nginx starts
+        - name: inject-env # writes window._env_ before nginx starts
           image: busybox
           command:
             - sh
@@ -34,7 +34,7 @@ spec:
               mountPath: /usr/share/nginx/html
       containers:
         - name: todo-ui
-          image: YOUR_DOCKERHUB_USERNAME/todo-ui:v1   # replace with your image
+          image: pjwesley7/todo-ui:v3 # replace with your image
           ports:
             - containerPort: 80
           resources:
@@ -61,7 +61,7 @@ spec:
             periodSeconds: 10
       volumes:
         - name: html-volume
-          emptyDir: {}                              # shared between initContainer and nginx
+          emptyDir: {} # shared between initContainer and nginx
 
 ---
 apiVersion: v1

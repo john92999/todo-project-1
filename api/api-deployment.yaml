@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todo-api
-          image: YOUR_DOCKERHUB_USERNAME/todo-api:v1   # replace with your image
+          image: pjwesley7/todo-api:v3 # replace with your image
           ports:
             - containerPort: 8080
           env:
@@ -35,7 +35,7 @@ spec:
             httpGet:
               path: /todos
               port: 8080
-            initialDelaySeconds: 60   # Spring Boot needs time to start
+            initialDelaySeconds: 60 # Spring Boot needs time to start
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
@@ -80,10 +80,10 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70      # scale up when CPU > 70%
+          averageUtilization: 70 # scale up when CPU > 70%
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 80      # scale up when memory > 80%
+          averageUtilization: 80 # scale up when memory > 80%
