@@ -1,20 +1,15 @@
-# Download Java
-ARG JAVA_VERSION="18-jdk"
-FROM openjdk:${JAVA_VERSION}
+FROM maven:3.9.6-eclipse-temurin-11
 
-LABEL versioin="1.0.0"
+WORKDIR /app
 
-ENV PROJECT_NAME="todo-api"
+COPY pom.xml .
 
-ARG APP_HOME="/opt/deployment/"
+RUN mvn dependency:go-offline -B
 
-# Copy the jar from local to image
-RUN mkdir ${APP_HOME}
-COPY target/todo-1.0.0.jar ${APP_HOME}/todo-1.0.0.jar
+COPY src ./src
 
-WORKDIR ${APP_HOME}
+RUN mvn clean package -DskipTests
 
 EXPOSE 8080
 
-# Run application with java -jar
-ENTRYPOINT ["java", "-jar", "todo-1.0.0.jar"]
+CMD ["java", "-jar", "target/todo-1.0.0.jar"]
