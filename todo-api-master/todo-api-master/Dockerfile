@@ -1,4 +1,4 @@
-FROM maven:3.9.6-eclipse-temurin-11
+FROM maven:3.9.6-eclipse-temurin-11 AS build
 
 WORKDIR /app
 
@@ -12,4 +12,12 @@ RUN mvn clean package -DskipTests
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "target/todo-1.0.0.jar"]
+FROM eclipse-temurin:11-jre-jammy
+
+WORKDIR /app
+
+COPY --from=build /app/target/todo-1.0.0.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

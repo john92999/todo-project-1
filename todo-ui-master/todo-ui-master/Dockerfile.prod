@@ -1,16 +1,20 @@
-FROM node:16-bullseye-slim
-
+# Stage 1: Build the React app
+FROM node:16-bullseye-slim AS build
 WORKDIR /app
-
 COPY package*.json ./
-
 RUN npm install --legacy-peer-deps
-
 COPY . .
+# REACT_APP_BACKEND_SERVER_URL will be injected at runtime via env.sh
+RUN npm run build
 
-ARG REACT_APP_BACKEND_SERVER_URL
-ENV REACT_APP_BACKEND_SERVER_URL=$REACT_APP_BACKEND_SERVER_URL
+# Stage 2: Serve via nginx
+FROM nginx:1.24-alpine
+COPY --from=build /app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 3000
+# env.sh injects runtime env vars into window._env_ before the app loads
+COPY env.sh /docker-entrypoint.d/env.sh
+RUN chmod +x /docker-entrypoint.d/env.sh
 
-CMD ["npm", "start"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
