@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 # Recreate config file
-rm -rf ./env-config.js
-touch ./env-config.js
+rm -rf /usr/share/nginx/html/env-config.js
+touch /usr/share/nginx/html/env-config.js
 
 # Add assignment 
 echo "window._env_ = {" >> ./env-config.js
